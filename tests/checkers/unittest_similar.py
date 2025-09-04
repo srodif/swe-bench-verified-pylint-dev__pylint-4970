@@ -432,7 +432,7 @@ def test_similar_checker_min_similarity_lines_zero() -> None:
     assert checker.stats["nb_duplicated_lines"] == 0
     assert checker.stats["percent_duplicated_lines"] == 0.0
     
-    # Check that no messages were added (this would need the linter mock to verify)
+    # Check that no messages were added (this would need the linter mock to verify).
 
 
 def test_help() -> None:
