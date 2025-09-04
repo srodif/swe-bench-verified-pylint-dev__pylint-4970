@@ -371,6 +371,70 @@ TOTAL lines=50 duplicates=14 percent=28.00
     )
 
 
+def test_duplicates_min_lines_zero_disables_checking() -> None:
+    """Test that setting min-similarity-lines to 0 disables duplicate checking entirely"""
+    output = StringIO()
+    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
+        similar.Run(["--duplicates=0", SIMILAR1, SIMILAR2])
+    assert ex.value.code == 0
+    assert (
+        output.getvalue().strip()
+        == """
+TOTAL lines=62 duplicates=0 percent=0.00
+""".strip()
+    )
+
+
+def test_similar_checker_min_similarity_lines_zero() -> None:
+    """Test that SimilarChecker with min_similarity_lines=0 disables duplicate checking"""
+    linter = PyLinter(reporter=Reporter())
+    checker = similar.SimilarChecker(linter)
+    # Simulate setting the option to 0
+    checker.set_option("min-similarity-lines", 0)
+    checker.open()
+    
+    # Add some test content with duplicates
+    import tempfile
+    import os
+    
+    content1 = """def test_func():
+    x = 1
+    y = 2
+    return x + y
+"""
+    content2 = """def other_func():  
+    x = 1
+    y = 2
+    return x + y
+"""
+    
+    # Create temporary files
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f1:
+        f1.write(content1)
+        f1.flush()
+        with open(f1.name, 'r') as stream:
+            checker.append_stream(f1.name, stream)
+    
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f2:
+        f2.write(content2) 
+        f2.flush()
+        with open(f2.name, 'r') as stream:
+            checker.append_stream(f2.name, stream)
+    
+    # Process and check that no messages are generated
+    checker.close()
+    
+    # Clean up temp files
+    os.unlink(f1.name)
+    os.unlink(f2.name)
+    
+    # Check that stats show no duplicates
+    assert checker.stats["nb_duplicated_lines"] == 0
+    assert checker.stats["percent_duplicated_lines"] == 0.0
+    
+    # Check that no messages were added (this would need the linter mock to verify).
+
+
 def test_help() -> None:
     output = StringIO()
     with redirect_stdout(output):

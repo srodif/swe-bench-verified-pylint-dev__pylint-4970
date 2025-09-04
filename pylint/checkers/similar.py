@@ -390,6 +390,12 @@ class Similar:
 
     def run(self) -> None:
         """start looking for similarities and display results on stdout"""
+        # If min_lines is 0, disable duplicate code checking entirely
+        if self.min_lines == 0:
+            total_line_number: int = sum(len(lineset) for lineset in self.linesets)
+            print(f"TOTAL lines={total_line_number} duplicates=0 percent=0.00")
+            return
+            
         self._display_sims(self._compute_sims())
 
     def _compute_sims(self) -> List[Tuple[int, Set[LinesChunkLimits_T]]]:
@@ -830,6 +836,13 @@ class SimilarChecker(BaseChecker, Similar, MapReduceMixin):
 
     def close(self):
         """compute and display similarities on closing (i.e. end of parsing)"""
+        # If min_lines is 0, disable duplicate code checking entirely
+        if self.min_lines == 0:
+            stats = self.stats
+            stats["nb_duplicated_lines"] = 0
+            stats["percent_duplicated_lines"] = 0.0
+            return
+
         total = sum(len(lineset) for lineset in self.linesets)
         duplicated = 0
         stats = self.stats
